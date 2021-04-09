@@ -18,6 +18,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -193,6 +194,18 @@ func (c *Cmd) Kill() {
 	c.t.Helper()
 	c.validateHasStarted()
 	err := c.cmd.Process.Kill()
+	if err != nil {
+		c.t.Fatal(err)
+	}
+	c.status = finished
+}
+
+// Stop sends SIGTERM to the process of the current command
+func (c *Cmd) Stop() {
+	c.t.Helper()
+	c.validateHasStarted()
+	err := c.cmd.Process.Signal(syscall.SIGTERM)
+
 	if err != nil {
 		c.t.Fatal(err)
 	}

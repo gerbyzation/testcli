@@ -264,3 +264,25 @@ func TestMultiline(t *testing.T) {
 
 	c.cmd.Process.Kill()
 }
+
+func TestStopSendsSIGTERM(t *testing.T) {
+	Run(t, "go", "build", "-o", "interceptor", "tests/interceptor.go")
+	defer os.Remove("interceptor")
+
+	c := Command(t, "./interceptor")
+	c.Start()
+
+	readyMsg := "Ready for interception"
+	if !c.StdoutContains("Ready for interception") {
+		t.Log(c.Stdout())
+		t.Log(c.Stderr())
+		t.Fatalf("Expected %q, got %q", readyMsg, c.Stdout())
+	}
+	c.Stop()
+
+	c.Wait()
+	expected := "Received signal terminated, bye"
+	if !c.StdoutContains(expected) {
+		t.Fatalf("expected %q, got %q", expected, c.Stdout())
+	}
+}
